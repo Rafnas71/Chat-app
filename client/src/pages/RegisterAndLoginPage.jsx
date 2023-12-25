@@ -10,7 +10,7 @@ const RegisterAndLoginPage = () => {
 
   async function handleSubmit(ev) {
     ev.preventDefault();
-    const url = "/"+isLoggedInOrRegister;
+    const url = isLoggedInOrRegister;
     const { data } = await axios.post(url, { username, password });
     setLoggedInUsername(data.username);
     setId(data.id);

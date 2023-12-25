@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 var cookieParser = require("cookie-parser");
 var bcrypt = require('bcryptjs');
 var bcryptSalt = bcrypt.genSaltSync(10);
+const ws = require('ws')
 
 var app = express();
 app.use(
@@ -64,7 +65,6 @@ app.post("/login",async (req,res)=>{
   const foundUser = await User.findOne({username});
   if(foundUser){
     const passOK = bcrypt.compareSync(password,foundUser.password)
-    console.log(passOK) 
     if(passOK){
       jwt.sign(
         { userId: foundUser._id , username:foundUser.username },
@@ -81,4 +81,32 @@ app.post("/login",async (req,res)=>{
   }
 })
 
-app.listen(4000);
+const server = app.listen(4000);
+const wss = new ws.WebSocketServer({server})
+wss.on("connection",(connection , req)=>{
+  connection.send('hello')
+  const cookies = req.headers.cookie;
+  console.log(cookies)
+  if(cookies){
+    const tokenCookieString= req.headers.cookie.split(';').find(str=>str.startsWith(' token=') || str.startsWith('token='))
+    const token =tokenCookieString.split('=')[1]
+    if(token){
+      jwt.verify(token,jwtSecret,{},(err,userDoc)=>{
+        if(err) throw err
+        const {userId,username} = userDoc
+        connection.userId=userId
+        connection.username=username
+      })
+    }
+  }
+ 
+[...wss.clients].forEach(client =>{
+  client.send(JSON.stringify({
+    online:[...wss.clients].map(c=>({userId:c.userId,username:c.username}))
+  }))
+})
+  
+
+})
+
+  
