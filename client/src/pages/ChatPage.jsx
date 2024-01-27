@@ -15,10 +15,20 @@ export default function ChatPage() {
   const divUnderMessage = useRef();
 
   useEffect(() => {
+    connectToWs();
+  }, []);
+
+  function connectToWs() {
     const ws = new WebSocket("ws://localhost:4000");
     setWs(ws);
     ws.addEventListener("message", handleMessage);
-  }, []);
+    ws.addEventListener("close", () => {
+      setTimeout(() => {
+        console.log("Disconnected. Trying to reconnect");
+        connectToWs();
+      }, 1000);   
+    });
+  }
 
   function handleMessage(ev) {
     const messageData = JSON.parse(ev.data);

@@ -105,22 +105,20 @@ app.post("/login", async (req, res) => {
 app.get("/messages/:selectedUserId", async (req, res) => {
   const { selectedUserId } = req.params;
   const userDoc = await getUserfromToken(req);
-  const ourUserId = userDoc.userId
+  const ourUserId = userDoc.userId;
   const messages = await Message.find({
-    sender:{$in:[ourUserId,selectedUserId]},
-    recepient:{$in:[ourUserId,selectedUserId]},
-  }).sort({createdAt:-1});
-  res.json(messages)
+    sender: { $in: [ourUserId, selectedUserId] },
+    recepient: { $in: [ourUserId, selectedUserId] },
+  }).sort({ createdAt: -1 });
+  res.json(messages);
 });
-
 
 app.get("/test", (req, res) => {
   res.json("test");
 });
 
-const server = app.listen(4000);
+const server = app.listen(4000)
 const wss = new ws.WebSocketServer({ server });
-
 wss.on("connection", (connection, req) => {
   //read username and userId from the cookie for this connection
   const cookies = req.headers.cookie;
