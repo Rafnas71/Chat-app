@@ -109,24 +109,51 @@ app.get("/messages/:selectedUserId", async (req, res) => {
   const messages = await Message.find({
     sender: { $in: [ourUserId, selectedUserId] },
     recepient: { $in: [ourUserId, selectedUserId] },
-  }).sort({ createdAt: 'asc' });
+  }).sort({ createdAt: "asc" });
   res.json(messages);
 });
 
-app.get('/people',async(req,res)=>{
-  const users =await User.find({},{_id:1,username:1})
-  res.json(users)
-})
+app.get("/people", async (req, res) => {
+  const users = await User.find({}, { _id: 1, username: 1 });
+  res.json(users);
+});
 
 app.get("/test", (req, res) => {
   res.json("test");
 });
 
-
 //Websocket server
 const server = app.listen(4000);
 const wss = new ws.WebSocketServer({ server });
 wss.on("connection", (connection, req) => {
+  function notifyAboutOnlinePeople() {
+    [...wss.clients].forEach((client) => {
+      client.send(
+        JSON.stringify({
+          online: [...wss.clients].map((c) => ({
+            userId: c.userId,
+            username: c.username,
+          })),
+        })
+      );
+    });
+  }
+
+  connection.isAlive = true;
+
+  connection.timer = setInterval(() => {
+    connection.ping()
+    connection.deadTimer = setTimeout(()=>{
+      connection.isAlive = false
+      connection.terminate()
+      notifyAboutOnlinePeople()
+    },1000)
+  },5000);
+
+  connection.on('pong',()=>{
+    clearTimeout(connection.deadTimer)
+  })
+
   //read username and userId from the cookie for this connection
   const cookies = req.headers.cookie;
   if (cookies) {
@@ -172,14 +199,5 @@ wss.on("connection", (connection, req) => {
 
   // console.log([...wss.clients]);
   //notify everyone about online peoples
-  [...wss.clients].forEach((client) => {
-    client.send(
-      JSON.stringify({
-        online: [...wss.clients].map((c) => ({
-          userId: c.userId,
-          username: c.username,
-        })),
-      })
-    );
-  });
+  notifyAboutOnlinePeople();
 });

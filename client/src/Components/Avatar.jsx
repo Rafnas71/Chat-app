@@ -25,7 +25,7 @@ const Avatar = ({ username, userId, online }) => {
         <div className="absolute bg-green-500 w-2.5 h-2.5 right-0 bottom-0 rounded-full"></div>
       ) : (
         <div className="absolute bg-gray-400 w-2.5 h-2.5 right-0 bottom-0 rounded-full"></div>
-      )}
+      )}    
     </div>
   );
 };
